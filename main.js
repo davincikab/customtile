@@ -1,3 +1,6 @@
+var map;
+var precipiation24hrs;
+
 // get the available timeslice
 function fetchTimeSlice() {
     fetch('https://api.weather.com/v3/TileServer/series/productSet/PPAcore?apiKey=4dbdefdb996648c4bdefdb9966f8c4ec')
@@ -7,16 +10,18 @@ function fetchTimeSlice() {
         console.log(precip24hr);
 
         // update the zoom, extents, timeslice
+        const { nativeZoom, maxZoom, series} = precip24hr;
+
+        createOverlay(nativeZoom, maxZoom, series[0].ts);
     })
     .catch(error => {
         console.log(error);
     })
 }
 
-fetchTimeSlice();
 
 function initMap() {
-    const map = new google.maps.Map(document.getElementById("map"), {
+    map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 5, lng: 13 },
       zoom: 6,
       streetViewControl: false,
@@ -25,26 +30,38 @@ function initMap() {
       },
     });
 
-    const precipiation24hrs = new google.maps.ImageMapType({
-      getTileUrl: function (coord, zoom) {
-        console.log(coord);
+    fetchTimeSlice();
 
-        const bound = Math.pow(2, zoom);
-        let url = 'https://api.weather.com/v3/TileServer/tile/precip24hr?ts=1605019800&xyz='
-            + coord.x +':'+ coord.y+':'+ zoom +'&apiKey=4dbdefdb996648c4bdefdb9966f8c4ec';
-        console.log(url);
+    
 
-        return url;
-      },
-      tileSize: new google.maps.Size(256, 256),
-      maxZoom: 9,
-      minZoom: 0,
-      radius: 1738000,
-      name: "Moon",
+}
+
+function createOverlay(nativeZoom, maxZoom, timeslice) {
+    map.setOptions({
+        zoom:nativeZoom,
+        maxZoom:maxZoom
     });
 
-    map.overlayMapTypes.insertAt(0, precipiation24hrs);
+    precipiation24hrs = new google.maps.ImageMapType({
+        getTileUrl: function (coord, zoom) {
+          console.log(coord);
+  
+          let url = 'https://api.weather.com/v3/TileServer/tile/precip24hr?'+
+            'ts=' + timeslice +'&xyz='+
+            coord.x +':'+ coord.y+':'+ zoom +'&apiKey=4dbdefdb996648c4bdefdb9966f8c4ec';
 
+          console.log(url);
+  
+          return url;
+        },
+        tileSize: new google.maps.Size(256, 256),
+        maxZoom: 9,
+        minZoom: 0,
+        radius: 1738000,
+        name: "Moon",
+      });
+  
+      map.overlayMapTypes.insertAt(0, precipiation24hrs);
 }
   
 // Keep track of the zoom level, coordinates and time slice
