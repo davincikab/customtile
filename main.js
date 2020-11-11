@@ -6,11 +6,11 @@ function fetchTimeSlice() {
     fetch('https://api.weather.com/v3/TileServer/series/productSet/PPAcore?apiKey=4dbdefdb996648c4bdefdb9966f8c4ec')
     .then(res => res.json())
     .then(response => {
-        const { seriesInfo:{ precip24hr }} = response;
-        console.log(precip24hr);
+        const { seriesInfo:{ radar }} = response;
+        console.log(radar);
 
         // update the zoom, extents, timeslice
-        const { nativeZoom, maxZoom, series} = precip24hr;
+        const { nativeZoom, maxZoom, series} = radar;
 
         createOverlay(nativeZoom, maxZoom, series[0].ts);
     })
@@ -32,8 +32,6 @@ function initMap() {
 
     fetchTimeSlice();
 
-    
-
 }
 
 function createOverlay(nativeZoom, maxZoom, timeslice) {
@@ -46,7 +44,7 @@ function createOverlay(nativeZoom, maxZoom, timeslice) {
         getTileUrl: function (coord, zoom) {
           console.log(coord);
   
-          let url = 'https://api.weather.com/v3/TileServer/tile/precip24hr?'+
+          let url = 'https://api.weather.com/v3/TileServer/tile/radar?'+
             'ts=' + timeslice +'&xyz='+
             coord.x +':'+ coord.y+':'+ zoom +'&apiKey=4dbdefdb996648c4bdefdb9966f8c4ec';
 
