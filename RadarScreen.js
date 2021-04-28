@@ -39,10 +39,12 @@ interface RadarScreenProps {
 }
 
 const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
+  const rAnimFrame;
   const {navigation, userReducer, appReducer} = props;
   const {userDetails, userData, loggedIn} = userReducer;
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [zoom, setZoom] = useState(0);
+  const [tileOpacity, setTileOpacity] = useState(1);
   const [maxZoom, setMaxZoom] = useState<null | number>(null);
   const [series, setSeries] = useState([]);
   const [tileUrl, setTileUrl] = useState('');
@@ -79,6 +81,9 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
       const interval = setInterval(() => {
         setIntervalId(interval);
         if (currIndex < series.length) {
+          // update the opacity to zero
+          setTileOpacity(0);
+
           onTimeSliceChange(series[currIndex]);
 
           currIndex = currIndex + 1;
@@ -88,6 +93,8 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
           currIndex = 0;
           time = 1;
           setcurrImageIndex(0);
+
+          setTileOpacity(0);
           onTimeSliceChange(series[currIndex]);
         }
       }, 1000);
@@ -154,9 +161,39 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
 
       setTileUrl(tileUrl);
 
-      // update the opacity (within 2s)
+      // update the opacity (within 1s)
+      runOpacityTransition();
     }
   };
+
+  // add a transition effect to the layer opacity
+  const runOpacityTransition = () => {
+    let start = performance.now();
+    let duration = 1000;
+  
+    rAnimFrame = requestAnimationFrame(function animate(time) {
+      // timeFraction goes from 0 to 1
+      let timeFraction = (time - start) / duration;
+      if (timeFraction > 1) timeFraction = 1;
+  
+      // calculate the current animation state
+      let progress = timeFraction;
+  
+      // update opacity
+      setTileOpacity(progress);
+
+      // cancel the animation frame
+      if(progress == 1) {
+          cancelAnimationFrame(rAnimFrame);
+      }
+      
+      // rerun if the value is less than 1
+      if (timeFraction < 1) {
+        rAnimFrame = requestAnimationFrame(animate);
+      }
+  
+    });
+  }
 
   if (loading) {
     return (
@@ -300,6 +337,7 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
               urlTemplate={tileUrl}
               maximumZ={maxZoom === null ? undefined : maxZoom}
               minimumZ={zoom}
+              opacity={tileOpacity}
               zIndex={1}
             />
           </MapView>
