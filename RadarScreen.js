@@ -1,4 +1,4 @@
-import React, {FunctionComponent, useState, useCallback} from 'react';
+import React, {FunctionComponent, useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -39,12 +39,12 @@ interface RadarScreenProps {
 }
 
 const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
-  const rAnimFrame;
+  let rAnimFrame;
   const {navigation, userReducer, appReducer} = props;
   const {userDetails, userData, loggedIn} = userReducer;
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [zoom, setZoom] = useState(0);
-  const [tileOpacity, setTileOpacity] = useState(1);
+  const [tileOpacity, setTileOpacity] = useState(0);
   const [maxZoom, setMaxZoom] = useState<null | number>(null);
   const [series, setSeries] = useState([]);
   const [tileUrl, setTileUrl] = useState('');
@@ -68,6 +68,12 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+
+
+  // update the opacity on tile URl change
+  useEffect(() => {
+    runOpacityTransition();
+  }, [tileUrl]);
 
   const playWeather = () => {
     setPlayingWeather(true);
@@ -97,7 +103,7 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
           setTileOpacity(0);
           onTimeSliceChange(series[currIndex]);
         }
-      }, 1000);
+      }, 1500);
     }
   };
 
@@ -160,16 +166,13 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
       console.log(`Tile url in on Time Slice Change: ${tileUrl}`)
 
       setTileUrl(tileUrl);
-
-      // update the opacity (within 1s)
-      runOpacityTransition();
     }
   };
 
   // add a transition effect to the layer opacity
   const runOpacityTransition = () => {
     let start = performance.now();
-    let duration = 1000;
+    let duration = 750;
   
     rAnimFrame = requestAnimationFrame(function animate(time) {
       // timeFraction goes from 0 to 1
@@ -195,6 +198,7 @@ const RadarScreen: FunctionComponent<RadarScreenProps> = (props) => {
     });
   }
 
+  console.log("Tile Opacity: " + tileOpacity);
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
